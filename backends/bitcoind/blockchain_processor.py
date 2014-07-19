@@ -9,7 +9,7 @@ import time
 import threading
 import traceback
 import urllib
-
+from ltc_scrypt import getPoWHash
 from backends.bitcoind import deserialize
 from processor import Processor, print_log
 from utils import *
@@ -135,8 +135,7 @@ class BlockchainProcessor(Processor):
         }
 
     def get_header(self, height):
-        block_hash = self.bitcoind('getblockhash', [height])
-        b = self.bitcoind('getblock', [block_hash])
+        b = self.bitcoind('getblockbynumber', [height])
         return self.block2header(b)
 
     def init_headers(self, db_height):
@@ -174,7 +173,7 @@ class BlockchainProcessor(Processor):
         self.flush_headers()
 
     def hash_header(self, header):
-        return rev_hex(Hash(header_to_string(header).decode('hex')).encode('hex'))
+        return rev_hex(getPoWHash(header_to_string(header).decode('hex')).encode('hex'))
 
     def read_header(self, block_height):
         if os.path.exists(self.headers_filename):
@@ -236,7 +235,7 @@ class BlockchainProcessor(Processor):
         vds = deserialize.BCDataStream()
         vds.write(raw_tx.decode('hex'))
         try:
-            return deserialize.parse_Transaction(vds, is_coinbase=False)
+            return deserialize.parse_Transaction(vds, is_coinbase=False, is_coinstake=False)
         except:
             print_log("ERROR: cannot parse", txid)
             return None
@@ -302,8 +301,7 @@ class BlockchainProcessor(Processor):
 
     def get_merkle(self, tx_hash, height):
 
-        block_hash = self.bitcoind('getblockhash', [height])
-        b = self.bitcoind('getblock', [block_hash])
+        b = self.bitcoind('getblockbynumber', [height])
         tx_list = b.get('tx')
         tx_pos = tx_list.index(tx_hash)
 
@@ -358,22 +356,27 @@ class BlockchainProcessor(Processor):
 
 
     def deserialize_block(self, block):
+        is_stake_block = False
         txlist = block.get('tx')
+        if "proof-of-stake" in block.get('flags'): # scan block flags list for
+            is_stake_block = True                  #    "proof-of-stake" substring
+
         tx_hashes = []  # ordered txids
         txdict = {}     # deserialized tx
-        is_coinbase = True
-        for raw_tx in txlist:
-            tx_hash = hash_encode(Hash(raw_tx.decode('hex')))
+
+        for i in xrange(len(txlist)):
+            if is_stake_block and i == 0: # skip coinbase for
+                continue                  #     stake block
+            tx_hash = hash_encode(Hash(txlist[i].decode('hex')))
             vds = deserialize.BCDataStream()
-            vds.write(raw_tx.decode('hex'))
+            vds.write(txlist[i].decode('hex'))
             try:
-                tx = deserialize.parse_Transaction(vds, is_coinbase)
-            except:
+                tx = deserialize.parse_Transaction(vds, i == 0, is_stake_block and i == 1) # first transaction is always coinbase
+            except:                                                                        # second transaction is coinstake if we have a stake block
                 print_log("ERROR: cannot parse", tx_hash)
                 continue
             tx_hashes.append(tx_hash)
             txdict[tx_hash] = tx
-            is_coinbase = False
         return tx_hashes, txdict
 
 
@@ -600,39 +603,6 @@ class BlockchainProcessor(Processor):
         elif result != '':
             self.push_response(session, {'id': message_id, 'result': result})
 
-
-    def getfullblock(self, block_hash):
-        block = self.bitcoind('getblock', [block_hash])
-
-        rawtxreq = []
-        i = 0
-        for txid in block['tx']:
-            rawtxreq.append({
-                "method": "getrawtransaction",
-                "params": [txid],
-                "id": i,
-            })
-            i += 1
-
-        postdata = dumps(rawtxreq)
-        try:
-            respdata = urllib.urlopen(self.bitcoind_url, postdata).read()
-        except:
-            print_log("bitcoind error (getfullblock)")
-            traceback.print_exc(file=sys.stdout)
-            self.shared.stop()
-
-        r = loads(respdata)
-        rawtxdata = []
-        for ir in r:
-            if ir['error'] is not None:
-                self.shared.stop()
-                print_log("Error: make sure you run bitcoind with txindex=1; use -reindex if needed.")
-                raise BaseException(ir['error'])
-            rawtxdata.append(ir['result'])
-        block['tx'] = rawtxdata
-        return block
-
     def catch_up(self, sync=True):
 
         prev_root_hash = None
@@ -650,8 +620,8 @@ class BlockchainProcessor(Processor):
 
             # not done..
             self.up_to_date = False
-            next_block_hash = self.bitcoind('getblockhash', [self.storage.height + 1])
-            next_block = self.getfullblock(next_block_hash)
+            next_block = self.bitcoind('getblockbynumber', [self.storage.height + 1, True])
+            next_block_hash = next_block.get('hash')
             self.mtime('daemon')
 
             # fixme: this is unsafe, if we revert when the undo info is not yet written
@@ -677,7 +647,7 @@ class BlockchainProcessor(Processor):
             else:
 
                 # revert current block
-                block = self.getfullblock(self.storage.last_hash)
+                block = self.bitcoind('getblock', [self.storage.last_hash, True])
                 print_log("blockchain reorg", self.storage.height, block.get('previousblockhash'), self.storage.last_hash)
                 self.import_block(block, self.storage.last_hash, self.storage.height, sync, revert=True)
                 self.pop_header()

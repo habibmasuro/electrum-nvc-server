@@ -239,10 +239,11 @@ def parse_TxOut(vds, i):
     return d
 
 
-def parse_Transaction(vds, is_coinbase):
+def parse_Transaction(vds, is_coinbase, is_coinstake):
     d = {}
     start = vds.read_cursor
     d['version'] = vds.read_int32()
+    d['timestamp'] = vds.read_int32()
     n_vin = vds.read_compact_size()
     d['inputs'] = []
     for i in xrange(n_vin):
@@ -258,7 +259,8 @@ def parse_Transaction(vds, is_coinbase):
             #        print("skipping strange tx output with zero value")
             #        continue
             # if o['address'] != "None":
-            d['outputs'].append(o)
+            if not is_coinstake or i > 0:  # first coinstake output
+                d['outputs'].append(o)     #    transaction doesn't make any sense
 
     d['lockTime'] = vds.read_uint32()
     return d
@@ -376,13 +378,13 @@ def get_address_from_input_script(bytes):
         match2 = [ opcodes.OP_2, opcodes.OP_PUSHDATA4, opcodes.OP_PUSHDATA4, opcodes.OP_2, opcodes.OP_CHECKMULTISIG ]
         if match_decoded(dec2, match2):
             pubkeys = [ dec2[1][1].encode('hex'), dec2[2][1].encode('hex') ]
-            return pubkeys, signatures, hash_160_to_bc_address(hash_160(redeemScript), 5)
+            return pubkeys, signatures, hash_160_to_bc_address(hash_160(redeemScript), 20)
 
         # 2 of 3
         match2 = [ opcodes.OP_2, opcodes.OP_PUSHDATA4, opcodes.OP_PUSHDATA4, opcodes.OP_PUSHDATA4, opcodes.OP_3, opcodes.OP_CHECKMULTISIG ]
         if match_decoded(dec2, match2):
             pubkeys = [ dec2[1][1].encode('hex'), dec2[2][1].encode('hex'), dec2[3][1].encode('hex') ]
-            return pubkeys, signatures, hash_160_to_bc_address(hash_160(redeemScript), 5)
+            return pubkeys, signatures, hash_160_to_bc_address(hash_160(redeemScript), 20)
 
     return [], [], None
 
@@ -419,7 +421,7 @@ def get_address_from_output_script(bytes):
     # p2sh
     match = [ opcodes.OP_HASH160, opcodes.OP_PUSHDATA4, opcodes.OP_EQUAL ]
     if match_decoded(decoded, match):
-        addr = hash_160_to_bc_address(decoded[1][1],5)
+        addr = hash_160_to_bc_address(decoded[1][1],20)
         return addr
 
     return None
