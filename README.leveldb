@@ -10,7 +10,8 @@ short outline:
 __________________________________________________________
 1. Run novacoind.
 
-Install version 0.4.4.6u4 or higher.
+Install version 0.4.4.6u5 or higher. Previous versions won't provide sufficient getblock/getblockbynumber functionality.
+
 __________________________________________________________
 
 2. Install python-leveldb: 
