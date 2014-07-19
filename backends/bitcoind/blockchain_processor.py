@@ -65,7 +65,7 @@ class BlockchainProcessor(Processor):
                 self.bitcoind('getinfo')
                 break
             except:
-                print_log('cannot contact bitcoind...')
+                print_log('cannot contact novacoind...')
                 time.sleep(5)
                 continue
 
@@ -113,7 +113,7 @@ class BlockchainProcessor(Processor):
         try:
             respdata = urllib.urlopen(self.bitcoind_url, postdata).read()
         except:
-            print_log("error calling bitcoind")
+            print_log("error calling novacoind")
             traceback.print_exc(file=sys.stdout)
             self.shared.stop()
 
