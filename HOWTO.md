@@ -179,16 +179,16 @@ The section in the electrum server configuration file (see step 10) looks like t
 
 ### Step 8. Import blockchain into the database or download it
 
-It's recommended to fetch a pre-processed leveldb from the net
+It's recommended to fetch a pre-processed leveldb from the net.
 
-You can fetch recent copies of electrum leveldb databases and further instructions 
-from the Electrum full archival server foundry at:
-http://foundry.electrum.org/ 
+You can fetch recent copies of electrum leveldb databases from novacoin sourceforge page at:
+
+http://sourceforge.net/projects/novacoin/files/electrum-foundry/
 
 Alternatively if you have the time and nerve you can import the blockchain yourself.
 
-As of April 2014 it takes between two days and over a week to import 300k of blocks, depending
-on CPU speed, I/O speed and selected pruning limit.
+As of July 2014 it takes about one hour to import 110k of blocks, depending on CPU speed, 
+I/O speed and selected pruning limit.
 
 It's considerably faster and strongly recommended to index in memory. You can use /dev/shm or
 or create a tmpfs which will also use swap if you run out of memory:
@@ -200,8 +200,8 @@ RAM but add 15 gigs of swap from a file that's fine too. tmpfs is rather smart t
 used parts. It's fine to use a file on a SSD for swap in thise case. 
 
 It's not recommended to do initial indexing of the database on a SSD because the indexing process
-does at least 20 TB (!) of disk writes and puts considerable wear-and-tear on a SSD. It's a lot better
-to use tmpfs and just swap out to disk when necessary.   
+puts considerable wear-and-tear on a SSD. It's a lot better to use tmpfs and just swap out to disk
+ when necessary.   
 
 Databases have grown to roughly 8 GB in April 2014, give or take a gigabyte between pruning limits 
 100 and 10000. Leveldb prunes the database from time to time, so it's not uncommon to see databases
