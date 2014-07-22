@@ -235,7 +235,7 @@ class BlockchainProcessor(Processor):
         vds = deserialize.BCDataStream()
         vds.write(raw_tx.decode('hex'))
         try:
-            return deserialize.parse_Transaction(vds, is_coinbase=False, is_coinstake=False)
+            return deserialize.parse_Transaction(vds, is_coinbase=False)
         except:
             print_log("ERROR: cannot parse", txid)
             return None
@@ -356,23 +356,18 @@ class BlockchainProcessor(Processor):
 
 
     def deserialize_block(self, block):
-        is_stake_block = False
         txlist = block.get('tx')
-        if "proof-of-stake" in block.get('flags'): # scan block flags list for
-            is_stake_block = True                  #    "proof-of-stake" substring
 
         tx_hashes = []  # ordered txids
         txdict = {}     # deserialized tx
 
-        for i in xrange(len(txlist)):
-            if is_stake_block and i == 0: # skip coinbase for
-                continue                  #     stake block
-            tx_hash = hash_encode(Hash(txlist[i].decode('hex')))
+        for i, raw_tx in enumerate(txlist):
+            tx_hash = hash_encode(Hash(raw_tx.decode('hex')))
             vds = deserialize.BCDataStream()
-            vds.write(txlist[i].decode('hex'))
+            vds.write(raw_tx.decode('hex'))
             try:
-                tx = deserialize.parse_Transaction(vds, i == 0, is_stake_block and i == 1) # first transaction is always coinbase
-            except:                                                                        # second transaction is coinstake if we have a stake block
+                tx = deserialize.parse_Transaction(vds, i == 0) # first transaction is always coinbase
+            except:
                 print_log("ERROR: cannot parse", tx_hash)
                 continue
             tx_hashes.append(tx_hash)

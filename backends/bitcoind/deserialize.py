@@ -239,7 +239,7 @@ def parse_TxOut(vds, i):
     return d
 
 
-def parse_Transaction(vds, is_coinbase, is_coinstake):
+def parse_Transaction(vds, is_coinbase):
     d = {}
     start = vds.read_cursor
     d['version'] = vds.read_int32()
@@ -255,12 +255,10 @@ def parse_Transaction(vds, is_coinbase, is_coinstake):
     for i in xrange(n_vout):
             o = parse_TxOut(vds, i)
 
-            #if o['address'] == "None" and o['value']==0:
-            #        print("skipping strange tx output with zero value")
-            #        continue
-            # if o['address'] != "None":
-            if not is_coinstake or i > 0:  # first coinstake output
-                d['outputs'].append(o)     #    transaction doesn't make any sense
+            if o['address'] == None or o['value']==0:
+                    #print("skipping strange tx output with zero value")
+                    continue
+            d['outputs'].append(o)
 
     d['lockTime'] = vds.read_uint32()
     return d
