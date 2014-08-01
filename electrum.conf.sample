@@ -1,13 +1,13 @@
 [server]
 host = localhost
 #report_host = 
-stratum_tcp_port = 50001
-stratum_http_port = 8081
-#stratum_tcp_ssl_port = 50002
-#stratum_http_ssl_port = 8082
-#report_stratum_tcp_port = 50001
+stratum_tcp_port = 40001
+stratum_http_port = 7081
+#stratum_tcp_ssl_port = 40002
+#stratum_http_ssl_port = 7082
+#report_stratum_tcp_port = 40001
 #report_stratum_http_port = 80
-#report_stratum_tcp_ssl_port = 50002
+#report_stratum_tcp_ssl_port = 40002
 #report_stratum_http_ssl_port = 443
 password = secret
 banner = Welcome to Electrum!

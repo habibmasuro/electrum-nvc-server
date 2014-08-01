@@ -47,10 +47,10 @@ def create_config():
     config.set('server', 'banner', 'Welcome to Electrum!')
     config.set('server', 'host', 'localhost')
     config.set('server', 'report_host', '')
-    config.set('server', 'stratum_tcp_port', '50001')
-    config.set('server', 'stratum_http_port', '8081')
-    config.set('server', 'stratum_tcp_ssl_port', '50002')
-    config.set('server', 'stratum_http_ssl_port', '8082')
+    config.set('server', 'stratum_tcp_port', '40001')
+    config.set('server', 'stratum_http_port', '7081')
+    config.set('server', 'stratum_tcp_ssl_port', '40002')
+    config.set('server', 'stratum_http_ssl_port', '7082')
     config.set('server', 'report_stratum_tcp_port', '')
     config.set('server', 'report_stratum_http_port', '')
     config.set('server', 'report_stratum_tcp_ssl_port', '')
@@ -85,7 +85,7 @@ def create_config():
 def run_rpc_command(params):
     cmd = params[0]
     import xmlrpclib
-    server = xmlrpclib.ServerProxy('http://localhost:8000')
+    server = xmlrpclib.ServerProxy('http://localhost:7000')
     func = getattr(server, cmd)
     r = func(*params[1:])
 
@@ -223,7 +223,7 @@ if __name__ == '__main__':
     
 
     from SimpleXMLRPCServer import SimpleXMLRPCServer
-    server = SimpleXMLRPCServer(('localhost',8000), allow_none=True, logRequests=False)
+    server = SimpleXMLRPCServer(('localhost',7000), allow_none=True, logRequests=False)
     server.register_function(lambda: os.getpid(), 'getpid')
     server.register_function(shared.stop, 'stop')
     server.register_function(cmd_info, 'info')
