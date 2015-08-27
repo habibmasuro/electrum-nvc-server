@@ -105,7 +105,6 @@ def run_rpc_command(params):
 def cmd_getinfo():
     return {
         'blocks': chain_proc.storage.height,
-        'peers': len(server_proc.peers),
         'sessions': len(dispatcher.request_dispatcher.get_sessions()),
         'watched': len(chain_proc.watched_addresses),
         'cached': len(chain_proc.history_cache),
