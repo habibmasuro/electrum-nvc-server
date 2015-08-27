@@ -9,7 +9,6 @@ import time
 import threading
 import traceback
 import urllib
-from ltc_scrypt import getPoWHash
 from backends.bitcoind import deserialize
 from processor import Processor, print_log
 from utils import *
@@ -180,7 +179,7 @@ class BlockchainProcessor(Processor):
         self.flush_headers()
 
     def hash_header(self, header):
-        return rev_hex(getPoWHash(header_to_string(header).decode('hex')).encode('hex'))
+        return rev_hex(HashScrypt(header_to_string(header).decode('hex')).encode('hex'))
 
     def read_header(self, block_height):
         if os.path.exists(self.headers_filename):
