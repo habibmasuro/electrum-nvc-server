@@ -102,6 +102,14 @@ def run_rpc_command(params):
     else:
         print r
 
+def cmd_getinfo():
+    return {
+        'blocks': chain_proc.storage.height,
+        'peers': len(server_proc.peers),
+        'sessions': len(dispatcher.request_dispatcher.get_sessions()),
+        'watched': len(chain_proc.watched_addresses),
+        'cached': len(chain_proc.history_cache),
+        }
 
 def cmd_info():
     return map(lambda s: {"time": s.time,
@@ -226,6 +234,7 @@ if __name__ == '__main__':
     server = SimpleXMLRPCServer(('localhost',7000), allow_none=True, logRequests=False)
     server.register_function(lambda: os.getpid(), 'getpid')
     server.register_function(shared.stop, 'stop')
+    server.register_function(cmd_getinfo, 'getinfo')
     server.register_function(cmd_info, 'info')
     server.register_function(cmd_debug, 'debug')
     server.socket.settimeout(1)
