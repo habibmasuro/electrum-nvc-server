@@ -629,6 +629,7 @@ class BlockchainProcessor(Processor):
                 next_block_hash = next_block.get('hash')
             except BaseException, e:
                 revert = True
+                next_block = self.bitcoind('getblock', [self.storage.last_hash])
                 next_block_hash = self.storage.last_hash
 
             self.mtime('daemon')
